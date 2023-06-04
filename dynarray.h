@@ -2,6 +2,7 @@
 #define DTS2_DYNARRAY_HEADER
 
 #include <stdlib.h>
+#include <string.h>
 
 #define DTS2_DYNARRAY_DEFAULT_SIZE ((size_t)4)
 
@@ -18,10 +19,12 @@
 
 #define dynarray_addEx(ARRAY_PTR, VALUE, REALLOC_FUNC, NEW_CAP_FUNC) do \
 { \
+    const size_t sizeof_T = sizeof(*(ARRAY_PTR)->data); \
+    \
     if((ARRAY_PTR)->capacity <= (ARRAY_PTR)->size) \
     { \
         const size_t new_cap = (NEW_CAP_FUNC)((ARRAY_PTR)->capacity);\
-        (ARRAY_PTR)->data = (REALLOC_FUNC)((ARRAY_PTR)->data, new_cap); \
+        (ARRAY_PTR)->data = (REALLOC_FUNC)((ARRAY_PTR)->data, sizeof_T*new_cap); \
         (ARRAY_PTR)->capacity = new_cap; \
     } \
     \
@@ -30,6 +33,83 @@
 } while(0)
 
 #define dynarray_add(ARRAY_PTR, VALUE) dynarray_addEx(ARRAY_PTR, VALUE, realloc, dts2_dynarray_calc_new_cap)
+#define dynarray_rem(ARRAY_PTR) do { if((ARRAY_PTR)->size > 0) (ARRAY_PTR)->size--; } while(0)
+
+#define dynarray_addat(ARRAY_PTR, INDEX, VALUE) dynarray_addatEx(ARRAY_PTR, INDEX, VALUE, realloc, dts2_dynarray_calc_new_cap)
+
+#ifndef DTS2_DEBUG_ACTIVE
+
+#define dynarray_addatEx(ARRAY_PTR, INDEX, VALUE, REALLOC_FUNC, NEW_CAP_FUNC) do \
+{ \
+    const size_t sizeof_T = sizeof(*(ARRAY_PTR)->data); \
+    \
+    if((ARRAY_PTR)->capacity <= (ARRAY_PTR)->size) \
+    { \
+        const size_t new_cap = (NEW_CAP_FUNC)((ARRAY_PTR)->capacity);\
+        (ARRAY_PTR)->data = (REALLOC_FUNC)((ARRAY_PTR)->data, sizeof_T*new_cap); \
+        (ARRAY_PTR)->capacity = new_cap; \
+    } \
+    \
+    memmove(&(ARRAY_PTR)->data[(INDEX)+1], &(ARRAY_PTR)->data[(INDEX)], sizeof_T*((ARRAY_PTR)->size-(INDEX))); \
+    (ARRAY_PTR)->data[(INDEX)] = (VALUE); \
+    (ARRAY_PTR)->size++; \
+} while(0)
+
+#else
+
+#define dynarray_addatEx(ARRAY_PTR, INDEX, VALUE, REALLOC_FUNC, NEW_CAP_FUNC) do \
+{ \
+    if((INDEX) < 0 || (INDEX) > (ARRAY_PTR)->size) \
+    { \
+        fprintf(stderr, "DTS2 ERROR at %s:%d: Adding an element at an invalid index of a dynarray!\n", __FILE__, __LINE__); \
+        fprintf(stderr, "\tdynarray info -> (index: %u, dynarray size: %u, dynarray cap: %u)\n", (unsigned)(INDEX), (unsigned)(ARRAY_PTR)->size, (unsigned)(ARRAY_PTR)->capacity); \
+        fprintf(stderr, "\tvalid index range -> (min: 0, max: size)\n"); \
+        exit(EXIT_FAILURE); \
+    } \
+    \
+    const size_t sizeof_T = sizeof(*(ARRAY_PTR)->data); \
+    \
+    if((ARRAY_PTR)->capacity <= (ARRAY_PTR)->size) \
+    { \
+        const size_t new_cap = (NEW_CAP_FUNC)((ARRAY_PTR)->capacity);\
+        (ARRAY_PTR)->data = (REALLOC_FUNC)((ARRAY_PTR)->data, sizeof_T*new_cap); \
+        (ARRAY_PTR)->capacity = new_cap; \
+    } \
+    \
+    memmove(&(ARRAY_PTR)->data[(INDEX)+1], &(ARRAY_PTR)->data[(INDEX)], sizeof_T*((ARRAY_PTR)->size-(INDEX))); \
+    (ARRAY_PTR)->data[(INDEX)] = (VALUE); \
+    (ARRAY_PTR)->size++; \
+} while(0)
+
+#endif
+
+#ifndef DTS2_DEBUG_ACTIVE
+
+#define dynarray_remat(ARRAY_PTR, INDEX) do \
+{ \
+    const size_t sizeof_T = sizeof(*(ARRAY_PTR)->data); \
+    memmove(&(ARRAY_PTR)->data[(INDEX)], &(ARRAY_PTR)->data[(INDEX)+1], sizeof_T*((ARRAY_PTR)->size-(INDEX)-1)); \
+    (ARRAY_PTR)->size--; \
+} while(0)\
+
+#else
+
+#define dynarray_remat(ARRAY_PTR, INDEX) do \
+{ \
+    if((INDEX) < 0 || (INDEX) >= (ARRAY_PTR)->size) \
+    { \
+        fprintf(stderr, "DTS2 ERROR at %s:%d: Removing an element at an invalid index of a dynarray!\n", __FILE__, __LINE__); \
+        fprintf(stderr, "\tdynarray info -> (index: %u, dynarray size: %u, dynarray cap: %u)\n", (unsigned)(INDEX), (unsigned)(ARRAY_PTR)->size, (unsigned)(ARRAY_PTR)->capacity); \
+        fprintf(stderr, "\tvalid index range -> (min: 0, max: size-1)\n"); \
+        exit(EXIT_FAILURE); \
+    } \
+    \
+    const size_t sizeof_T = sizeof(*(ARRAY_PTR)->data); \
+    memmove(&(ARRAY_PTR)->data[(INDEX)], &(ARRAY_PTR)->data[(INDEX)+1], sizeof_T*((ARRAY_PTR)->size-(INDEX)-1)); \
+    (ARRAY_PTR)->size--; \
+} while(0)\
+
+#endif
 
 #ifndef DTS2_DEBUG_ACTIVE
 
