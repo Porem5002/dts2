@@ -59,6 +59,7 @@
 } while (0)
 
 #define deque_add(DEQUE_PTR, VALUE) deque_addEx(DEQUE_PTR, VALUE, malloc, realloc)
+#define deque_rem(DEQUE_PTR) do { if((DEQUE_PTR)->size > 0) (DEQUE_PTR)->size--; } while(0)
 
 #ifndef DTS2_DEBUG_ACTIVE
 
