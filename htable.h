@@ -83,10 +83,7 @@ dts2_var(htable_getptr_end):\
     htable_getptr(TNODE, (TABLE_PTR), (KEY), &dts2_var(htable_get_valptr)); \
     \
     if(dts2_var(htable_get_valptr) != NULL) \
-    {\
         *(OUT_VALUE_PTR) = *dts2_var(htable_get_valptr);\
-        break;\
-    }\
     \
     *(OUT_CHECK_PTR) = dts2_var(htable_get_valptr) != NULL;\
 } while(0);
